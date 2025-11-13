@@ -15,7 +15,8 @@ trigger contactTrigger on Contact (before insert, after insert, before update, a
         
         	if ( !Trigger.new.isEmpty())
             {            
-            ContactTriggerHandler.preventDupContact(Trigger.new, Trigger.oldMap);                       
+            ContactTriggerHandler.preventDupContact(Trigger.new, Trigger.oldMap); 
+            ContactTriggerHandler.updateContactType(Trigger.new, Trigger.oldMap);                       
             }
         }
     

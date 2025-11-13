@@ -98,12 +98,21 @@ public class ContactTriggerHandler {
         Map<String,Contact> conEmailMap = new Map<String,Contact>();
         
         for(Contact con: newCon){
-            
-            if(con.Phone != null){
+            if(oldMap != null){
+                if(con.Phone != null && con.Phone!= oldMap.get(con.Id).Phone){
                 conPhoneMap.put(con.Phone,con);
             }
-            if(con.email != null){
+                if(con.email != null && con.email!= oldMap.get(con.Id).email){
                 conEmailMap.put(con.email,con);
+            }
+            }
+            else{
+                if(con.Phone != null ){
+                conPhoneMap.put(con.Phone,con);
+            }
+                if(con.email != null ){
+                conEmailMap.put(con.email,con);
+            }
             }            
         }
         
@@ -135,6 +144,46 @@ public class ContactTriggerHandler {
             }
             
         }
+    }
+    //update Contact Type
+    public static void updateContactType(List<Contact> newCon, Map<Id,Contact> oldMap){
+        
+        Set<Id> accIds = new Set<Id>();
+        Map<Id,String> accMap = new Map<Id,String>(); 
+
+        if(!newCon.isEmpty() ){
+
+            for (Contact con: newCon){
+                    accIds.add(con.AccountId);                
+            }
+
+            if(!accIds.isEmpty()){
+            
+            for (Account acc : [select Id,RecordType.Name from Account where Id IN: accIds])
+            {
+                accMap.put(acc.Id, acc.RecordType.Name);
+            }
+            }
+            if(oldMap == null){
+            for(Contact conObj: newCon){
+                string RecordTypeName = accMap.get(conObj.AccountId);
+                if (RecordTypeName != null){
+                    conObj.Contact_Type__c = RecordTypeName;
+                }
+            }
+            }
+            else{
+                for(Contact conObj: newCon){
+                string RecordTypeName = accMap.get(conObj.AccountId);
+                if (RecordTypeName != null){
+                    if(conObj.Contact_Type__c != RecordTypeName){
+                        conObj.addError('Contact Type Can not be other than Account Type!');
+                    }
+                }
+            }
+
+            }
+       }
     }
 
 }
