@@ -157,4 +157,35 @@ public class AccountTriggerHandler {
       }
     }
 
+    //prevent deactivation of account with active contact
+    public static void preventDeactivation(List<Account> newAcc, Map<Id,Account> oldMap){
+
+        Set<Id> accIds = new Set<Id>();
+        
+        for(Account acc: newAcc){
+                
+            	If(!oldMap.isEmpty() && (!acc.Is_Active__c == true) && (oldMap.get(acc.Id).Is_Active__c  != acc.Is_Active__c))
+                {
+            		accIds.add(acc.Id);
+            	}
+        }
+        
+        Map<Id, Integer> contCount = new Map<Id, Integer>();
+        List<AggregateResult> aggrList =[SELECT AccountId, COUNT(Id) contactCount
+            FROM Contact
+            WHERE AccountId IN :accIds
+            AND Is_Active__c = true
+            GROUP BY AccountId];
+        
+        for(AggregateResult agr: aggrList){
+            contCount.put((Id) agr.get('AccountId'),(Integer) agr.get('contactCount'));
+        }
+        for (Account accObj: newAcc)
+         {
+             if ((contCount.get(accObj.Id)) >= 0){
+                 accObj.addError('You can not deactivate an Account with Active Contacts.');
+             }                            
+         }
+    }
+ 
 }

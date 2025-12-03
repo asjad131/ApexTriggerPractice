@@ -10,6 +10,14 @@ trigger accountTrigger on Account (before insert, before update, after insert, a
           }
         
         }
+
+      if (( Trigger.isUpdate) && Trigger.isBefore){
+        
+        if ( !Trigger.new.isEmpty()){            
+            AccountTriggerHandler.preventDeactivation(Trigger.new,Trigger.oldMap);                   
+          }
+        
+        }
     
     if ((Trigger.isInsert) && Trigger.isAfter){
         

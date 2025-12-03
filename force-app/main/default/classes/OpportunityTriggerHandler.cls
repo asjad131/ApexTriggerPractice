@@ -179,9 +179,44 @@ public class OpportunityTriggerHandler {
                 
             }
             update accListToUpdate;
+        }   
+    }
+
+        public static void updateMaxOpportunityAmount(Map<Id, Opportunity> newMap, Map<Id, Opportunity> oldMap, Boolean isDelete, Boolean isUpdate) {
+        Set<Id> accountIds = new Set<Id>();
+
+        if (isDelete) {
+            for (Opportunity opp : oldMap.values()) {
+                if (opp.AccountId != null) accountIds.add(opp.AccountId);
+            }
+        } else if (isUpdate) {
+            for (Opportunity opp : oldMap.values()) {
+                if (opp.AccountId != null) accountIds.add(opp.AccountId);
+            }
+            for (Opportunity opp : newMap.values()) {
+                if (opp.AccountId != null) accountIds.add(opp.AccountId);
+            }
+        } else {
+            for (Opportunity opp : newMap.values()) {
+                if (opp.AccountId != null) accountIds.add(opp.AccountId);
+            }
         }
-        
-        
+
+        List<Account> accountsToUpdate = new List<Account>();
+        for (AggregateResult ar : [
+            SELECT AccountId, MAX(Amount) totalAmount
+            FROM Opportunity
+            WHERE AccountId IN :accountIds
+            AND StageName = 'Closed Won'
+            GROUP BY AccountId
+        ]) {
+            accountsToUpdate.add(new Account(
+                Id = (Id) ar.get('AccountId'),
+                Maximum_Opportunity_Amount__c  = (Decimal) ar.get('totalAmount')
+            ));
+        }
+
+        update accountsToUpdate;
     }
 
 }
