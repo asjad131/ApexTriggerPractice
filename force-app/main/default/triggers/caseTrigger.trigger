@@ -11,5 +11,8 @@ trigger caseTrigger on Case (after insert,after update, after delete, after unde
       caseTriggerHandler.updateCaseCount(Trigger.newMap, Trigger.oldMap, Trigger.isDelete, Trigger.isUpdate);
       caseTriggerHandler.updateAccountRating(Trigger.newMap, Trigger.oldMap, Trigger.isDelete, Trigger.isUpdate); 
     }
+    if((trigger.isInsert || trigger.isUpdate) && trigger.isAfter ){
+      caseTriggerHandler.createTask(Trigger.New,Trigger.oldMap);
+    }
 
 }

@@ -139,8 +139,53 @@ public class caseTriggerHandler {
             }
         
         }
-    
-    
-    
+
+        public static void createTask(List<Case> newCases, Map<Id,Case> oldMap){
+
+            Set<Id> accIds = new Set<Id>();
            
+            for(Case c: newCases)
+            {  
+                if(oldMap != null)
+                {
+                    if(c.Create_Task__c == true && oldMap.get(c.Id).Create_Task__c != true){
+                        accIds.add(c.AccountId);
+                    }
+                }
+                else
+                {
+                    if(c.Create_Task__c == true)
+                    {
+                        accIds.add(c.AccountId);
+                    }
+                }
+           }
+
+          Map<Id,Id> accConMap = new Map<Id,Id>();
+          List<Contact> conList = [SELECT Id, AccountId
+                                    FROM Contact
+                                    WHERE AccountId IN :accIds
+                                    AND Primary_Contact__c = true
+                                    LIMIT 1]; 
+          
+        for(Contact con: conList){
+            accConMap.put(con.AccountId,con.Id);
+          }
+        
+          List<Task> lstTask = new List<Task>();
+        for(Case cs: newCases){
+            if(cs.Create_Task__c == true && accConMap.containsKey(cs.AccountId) ){
+
+                Task task = new Task();
+                task.Subject = 'Follow Up task';
+                task.Status = 'Not Started';
+                task.WhoId = accConMap.get(cs.AccountId);
+                task.WhatId =cs.AccountId;
+                lstTask.add(task);
+            }
+        }
+        insert lstTask;
+
+        }
+             
 }
