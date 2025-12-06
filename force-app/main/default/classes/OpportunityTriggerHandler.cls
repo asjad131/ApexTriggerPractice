@@ -57,7 +57,7 @@ public class OpportunityTriggerHandler {
                 if (opp.AccountId != null) accountIds.add(opp.AccountId);
             }
         }
-
+       /*
         List<Account> accountsToUpdate = [Select Max_Opportunity_Name__c,(select Id, Name, Amount from Opportunities
                                                                          where Amount != NULL ORDER BY Amount DESC LIMIT 1) 
                                           from Account where Id IN:accountIds];
@@ -69,6 +69,26 @@ public class OpportunityTriggerHandler {
             
         }
 
+        update lstAcc;
+        */
+        //Method 2 using map
+        List<Opportunity> lstOpp = [SELECT Id, Name, AccountId, Amount from Opportunity WHERE AccountId IN: accountIds AND Amount!= null];
+        Map<Id,Opportunity> accOppMap = new Map<Id,Opportunity>();
+
+        for(Opportunity opp: lstOpp){
+
+            if(!accOppMap.containsKey(opp.AccountId)|| opp.Amount > accOppMap.get(opp.AccountId).Amount ){
+                accOppMap.put(opp.AccountId, opp);
+            }
+        }
+        List<Account> lstAcc = new List<Account>();
+
+        for(Id ids: accountIds){
+            Account acc = new Account();
+            acc.Id = ids;
+            acc.Description = accOppMap.get(ids).Name;
+            lstAcc.add(acc);
+        }
         update lstAcc;
     }
     //upsert Task on stage change
