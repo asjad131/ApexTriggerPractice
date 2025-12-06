@@ -185,5 +185,57 @@ public class ContactTriggerHandler {
             }
        }
     }
+    //update Account with Opp Amount and create Opportunity if 0 opportunities
+    public static void updateAccountAndOpp(List<Contact> newCon){
+
+        Set<Id> accIds = new Set<Id>();
+        for(Contact con: newCon){
+            if (con.AccountId != null) {
+            accIds.add(con.AccountId);
+        }
+        }
+        Map<Id, Decimal> accMap = new Map<Id, Decimal>();
+        List<Account> accListToUpdate = new List<Account>();
+        List<Opportunity> oppListToInsert = new List<Opportunity>();
+
+         //Query Account names
+        Map<Id, Account> accDetailsMap = new Map<Id, Account>(
+        [SELECT Id, Name FROM Account WHERE Id IN :accIds]
+        );
+            
+            for ( Opportunity  objOpp : [Select Id, AccountId, Amount from Opportunity where AccountId IN: accIds])
+            {
+               accMap.put(objOpp.AccountId, 
+               accMap.get(objOpp.AccountId) == null ? objOpp.Amount : accMap.get(objOpp.AccountId) + objOpp.Amount);  
+            }
+           
+            for ( Id accId : accIds){
+
+                if(accMap.containsKey(accId)){
+
+                    Account acc = new Account();
+                    acc.Id = accId;
+                    acc.Description = String.valueOf(accMap.get(accId));  
+                    accListToUpdate.add(acc);
+
+                }else{
+                    // Get Account name
+                    String accName = accDetailsMap.get(accId).Name;
+                    //Build new opp
+                    Opportunity opp = new Opportunity(
+                    Name = accName + ' - Test Opportunity',
+                    StageName = 'Prospecting',
+                    CloseDate = Date.today().addDays(30),
+                    AccountId = accId
+                    );
+                    oppListToInsert.add(opp);
+
+                }
+            }
+            update accListToUpdate;
+            insert oppListToInsert;
+            
+        
+    }
 
 }

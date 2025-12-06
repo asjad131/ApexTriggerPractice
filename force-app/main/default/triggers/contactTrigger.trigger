@@ -19,7 +19,7 @@ trigger contactTrigger on Contact (before insert, after insert, before update, a
             ContactTriggerHandler.updateContactType(Trigger.new, Trigger.oldMap);                       
             }
         }
-    
+        /*
         if ((Trigger.isInsert) && Trigger.isBefore)
         {
         	if ( !Trigger.new.isEmpty())
@@ -27,12 +27,20 @@ trigger contactTrigger on Contact (before insert, after insert, before update, a
             	ContactTriggerHandler.preventContactCreation(Trigger.new);                                   
           	}  
         }
+            */
         
     	if (( Trigger.isUpdate || Trigger.isUndelete || Trigger.isInsert || trigger.isDelete) && Trigger.isAfter)
     	{
         	ContactTriggerHandler.updateContactCount(Trigger.newMap, Trigger.oldMap, Trigger.isDelete, Trigger.isUpdate);
     	}
 
+        if (( Trigger.isInsert) && Trigger.isAfter)
+        {
+        
+        	if ( !Trigger.new.isEmpty())
+            {            
+            ContactTriggerHandler.updateAccountAndOpp(Trigger.new);                       
+            }
+        }
 
-    
 }
