@@ -187,5 +187,86 @@ public class AccountTriggerHandler {
              }                            
          }
     }
- 
+    //send mail to account owner with contact details
+    public static void sendMailToAccountOwner(List<Account> newAcc, Map<Id,Account> oldMap){
+
+        Set<Id> accIds = new Set<Id>();
+        Set<Id> ownerIds = new Set<Id>();
+        Map<Id, Datetime> accOldLmdMap = new Map<Id, Datetime>();
+
+        for(Account acc: newAcc){
+            accIds.add(acc.Id);
+            ownerIds.add(acc.OwnerId);
+
+            Account accOld = oldMap.get(acc.Id);
+            if (accOld != null) {
+                accOldLmdMap.put(acc.Id, accOld.LastModifiedDate);
+            }
+        }
+
+        List<Contact> conList = new List<Contact>([Select Id, FirstName, LastName, Email,
+                    AccountId, LastModifiedDate from Contact 
+                    where AccountId IN:accIds  ]);
+
+        Map<Id, List<Contact>> contactsByAccount = new Map<Id, List<Contact>>();
+        Datetime nowTs = System.now();
+        
+        for (Contact c : conList) {
+            Datetime accOldLmd = accOldLmdMap.get(c.AccountId);
+            if (accOldLmd == null) continue;
+
+            
+            if (c.LastModifiedDate >= accOldLmd && c.LastModifiedDate <= nowTs) {
+                List<Contact> lst = contactsByAccount.get(c.AccountId);
+                if (lst == null) {
+                    lst = new List<Contact>();
+                    contactsByAccount.put(c.AccountId, lst);
+                }
+                lst.add(c);
+            }
+        }
+        Map<Id, User> userById = new Map<Id, User>([
+            SELECT Id, Email, Name
+            FROM User
+            WHERE Id IN :ownerIds
+        ]);
+        //send mail
+        List<Messaging.SingleEmailMessage> emails = new List<Messaging.SingleEmailMessage>();
+
+        for (Account accNew : newAcc) {
+            List<Contact> accContacts = contactsByAccount.get(accNew.Id);
+            if (accContacts == null || accContacts.isEmpty()) {
+                continue;
+            }
+            User owner = userById.get(accNew.OwnerId);
+            if (owner == null || String.isBlank(owner.Email)) {
+                continue;
+            }
+            String body = 'Hi ' + owner.Name + ',\n\n'
+                + 'The following contacts under Account "' + accNew.Name + '" '
+                + 'were modified since the last account update:\n\n';
+
+            for (Contact c : accContacts) {
+                body += '- ' 
+                     + (c.FirstName != null ? c.FirstName + ' ' : '')
+                     + (c.LastName != null  ? c.LastName  : '')
+                     + ' | Email: ' + (c.Email != null ? c.Email : 'N/A')
+                     + ' | LastModified: ' + String.valueOf(c.LastModifiedDate)
+                     + '\n';
+            }
+
+            body += '\nRegards,\nSalesforce System';
+
+            Messaging.SingleEmailMessage msg = new Messaging.SingleEmailMessage();
+            msg.setToAddresses(new String[] { owner.Email });
+            msg.setSubject('Contacts updated for Account: ' + accNew.Name);
+            msg.setPlainTextBody(body);
+
+            emails.add(msg);
+        }
+        if (!emails.isEmpty()) {
+        Messaging.sendEmail(emails);
+        }
+
+    }
 }

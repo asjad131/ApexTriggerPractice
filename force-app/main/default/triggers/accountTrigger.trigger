@@ -33,6 +33,7 @@ trigger accountTrigger on Account (before insert, before update, after insert, a
             AccountTriggerHandler.updateContactsPhone(Trigger.new, Trigger.oldMap);
             AccountTriggerHandler.sendEmailToContact(Trigger.new, Trigger.oldMap);
             AccountTriggerHandler.updateOldOpportunities(Trigger.new);  
+            AccountTriggerHandler.sendMailToAccountOwner(Trigger.new, Trigger.oldMap);
           }
         
         }
