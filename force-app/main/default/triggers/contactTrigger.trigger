@@ -39,7 +39,8 @@ trigger contactTrigger on Contact (before insert, after insert, before update, a
         
         	if ( !Trigger.new.isEmpty())
             {            
-            ContactTriggerHandler.updateAccountAndOpp(Trigger.new);                       
+            ContactTriggerHandler.updateAccountAndOpp(Trigger.new); 
+            ContactTriggerHandler.updateNewContact(Trigger.new);                         
             }
         }
 

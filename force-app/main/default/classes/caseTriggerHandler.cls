@@ -14,14 +14,19 @@ public class caseTriggerHandler {
         
         Map<Id,Account> accMap = new Map<Id,Account> ([select Id,Latest_Case_Number__c  from Account where Id IN: accIds]);
         List<Account> accsToUpdate = new List<Account>();
-        
-        for (Case cs: newCase)
-        { 
+
+        if ( !newCase.isEmpty()){
+            for (Case cs: newCase)
+            { 
             Account acc = accMap.get(cs.AccountId);
             acc.Latest_Case_Number__c= cs.CaseNumber;
             accsToUpdate.add(acc);
+           }
         }
+        if(!accsToUpdate.isEmpty()){
             update accsToUpdate;
+        }
+        
 
       }
     //update case count on account for each status
@@ -185,6 +190,61 @@ public class caseTriggerHandler {
             }
         }
         insert lstTask;
+
+        }
+
+        public static void relateCaseToContact(List<Case> newCases){
+
+            Set<String> caseEmails = new Set<String>();
+
+            for (Case c: newCases){
+
+                if(c.Supplied_Email__c != null){
+                    caseEmails.add(c.Supplied_Email__c);
+                }
+            }
+            
+            List<Contact> conList = [Select Id, Email from Contact where Email IN: caseEmails ];
+            Map<String, Contact> conEmailMap = new Map<String,Contact>();
+            Map<String,Id> emailToContactId = new Map<String, Id>();
+            List<Contact> lstContactsToBeInserted= new List<Contact>();
+
+            for(Contact con: conList){
+                conEmailMap.put(con.Email,con);
+            }
+
+            for (Case ca: newCases){
+
+                if(ca.Supplied_Email__c != null){
+                    
+                    if (conEmailMap.containsKey(ca.Supplied_Email__c)){
+                        Contact existingContact = conEmailMap.get(ca.Supplied_Email__c);
+                        emailToContactId.put(ca.Supplied_Email__c,existingContact.Id);
+
+                    }else{
+                        Contact con = new Contact();
+                        con.LastName = 'Test';
+                        con.Email= ca.Supplied_Email__c;
+                        lstContactsToBeInserted.add(con);
+                    }
+                }
+            }
+
+            insert lstContactsToBeInserted;
+            
+            for(Contact newCon : lstContactsToBeInserted){
+                 emailToContactId.put(newCon.Email,newCon.Id);
+
+            }
+             for (Case csr: newCases){
+
+                if(emailToContactId.containsKey(csr.Supplied_Email__c)){
+                    csr.ContactId = emailToContactId.get(csr.Supplied_Email__c);
+
+                }
+
+             }
+
 
         }
              

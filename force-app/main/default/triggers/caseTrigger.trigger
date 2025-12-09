@@ -1,9 +1,13 @@
-trigger caseTrigger on Case (after insert,after update, after delete, after undelete) {
+trigger caseTrigger on Case (before insert, after insert,after update, after delete, after undelete) {
             
 
     if(trigger.isInsert && trigger.isAfter)
     {
-     caseTriggerHandler.updateLatestCaseNumber(Trigger.New);
+     //caseTriggerHandler.updateLatestCaseNumber(Trigger.New);
+    }
+    if(trigger.isInsert && trigger.isBefore)
+    {
+     caseTriggerHandler.relateCaseToContact(Trigger.New);
     }
     
     if (( Trigger.isUpdate || Trigger.isUndelete || Trigger.isInsert || trigger.isDelete) && Trigger.isAfter)

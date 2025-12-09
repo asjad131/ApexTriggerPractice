@@ -238,4 +238,45 @@ public class ContactTriggerHandler {
         
     }
 
+    //new contact check box
+    public static void updateNewContact(List<Contact> newCon){
+
+        Set<Id> accIds = new Set<Id>();
+        for(Contact c: newCon){
+            accIds.add(c.AccountId);
+        }
+
+        List<Contact> lstCon = [SELECT Id, AccountId, New_Contact__c FROM Contact where AccountId IN:accIds ORDER BY CreatedDate DESC ];
+
+        Map<Id, Contact> recConByAccount = new Map<Id, Contact>();
+        
+        for (Contact con : lstCon) {
+
+                if (!recConByAccount.containsKey(con.AccountId)) {
+                    recConByAccount.put(con.AccountId, con);
+                }
+        }
+        List<Contact> lstConToUpdate = new List<COntact>();
+
+        for(Contact cont: lstCon){
+            
+            Contact recentCon = recConByAccount.get(cont.AccountId);
+
+            if(recentCon.Id == cont.Id && recentCon.New_Contact__c == false){
+                cont.New_Contact__c= true;
+                lstConToUpdate.add(cont);
+            }
+            else{
+
+                if(cont.New_Contact__c == true){
+                    cont.New_Contact__c= false;
+                    lstConToUpdate.add(cont);
+                }
+
+            }
+        }
+        update lstConToUpdate;
+
+    }
+
 }
