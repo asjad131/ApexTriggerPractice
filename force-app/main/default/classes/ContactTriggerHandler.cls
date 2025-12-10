@@ -276,7 +276,55 @@ public class ContactTriggerHandler {
             }
         }
         update lstConToUpdate;
+    }
+    //update all contacts description to Account
+    public static void updateAccountDescAll(Map<Id,Contact> newMap, Map<Id,Contact> oldMap, Boolean isDelete, Boolean isUpdate){
+        
+        Set<Id> accountIds = new Set<Id>();
+        
+        if (isDelete) {
+            for (Contact con : oldMap.values()) {
+                if (con.AccountId != null) accountIds.add(con.AccountId);
+            }
+        } else if (isUpdate) {
+            for (Contact con : oldMap.values()) {
+                if (con.AccountId != null) accountIds.add(con.AccountId);
+            }
+            for (Contact con : newMap.values()) {
+                if (con.AccountId != null) accountIds.add(con.AccountId);
+            }
+        } else {
+            for (Contact con : newMap.values()) {
+                if (con.AccountId != null) accountIds.add(con.AccountId);
+            }
+        }
 
+        if(!accountIds.isEmpty()){
+            Map<Id,LIst<String>> accContactInfo = new Map<Id,List<String>>();
+            List<Contact> lstCon = new List<Contact>([Select Id, Name, CreatedDate, AccountId from Contact where AccountId IN: accountIds]);
+            List<Account> accsToUpdate = new List<Account>();
+        
+            for (Contact cont: lstCon){
+                String contactInfo = 'Contact Name:' + cont.Name + ' - ' + 'Created Date:' + cont.CreatedDate;
+
+                if(!accContactInfo.containsKey(cont.AccountId)){
+                    accContactInfo.put(cont.AccountId, new List<String>{contactInfo}) ;   
+                }else{
+                    accContactInfo.get(cont.AccountId).add(contactInfo);
+                }
+            
+            }
+            for(Id ids: accountIds){
+                Account acc = new Account();
+                acc.Id = ids;
+
+                if(accContactInfo.containsKey(ids)){
+                    acc.Description = String.join(accContactInfo.get(ids), ';');
+                }
+                accsToUpdate.add(acc);
+            }
+            update accsToUpdate;
+        }
     }
 
 }

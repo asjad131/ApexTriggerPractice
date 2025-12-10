@@ -6,7 +6,7 @@ trigger contactTrigger on Contact (before insert, after insert, before update, a
         
         	if ( !Trigger.new.isEmpty())
             {            
-            ContactTriggerHandler.updateAccountDesc(Trigger.new, Trigger.oldMap);                       
+            //ContactTriggerHandler.updateAccountDesc(Trigger.new, Trigger.oldMap);                       
             }
         }
     
@@ -32,6 +32,7 @@ trigger contactTrigger on Contact (before insert, after insert, before update, a
     	if (( Trigger.isUpdate || Trigger.isUndelete || Trigger.isInsert || trigger.isDelete) && Trigger.isAfter)
     	{
         	ContactTriggerHandler.updateContactCount(Trigger.newMap, Trigger.oldMap, Trigger.isDelete, Trigger.isUpdate);
+            ContactTriggerHandler.updateAccountDescAll(Trigger.newMap, Trigger.oldMap, Trigger.isDelete, Trigger.isUpdate); 
     	}
 
         if (( Trigger.isInsert) && Trigger.isAfter)
