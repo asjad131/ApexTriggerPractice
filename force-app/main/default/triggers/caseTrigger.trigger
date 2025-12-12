@@ -19,4 +19,9 @@ trigger caseTrigger on Case (before insert, after insert,after update, after del
       caseTriggerHandler.createTask(Trigger.New,Trigger.oldMap);
     }
 
+    if(trigger.isDelete && trigger.isAfter)
+    {
+       caseTriggerHandler.createTaskAndEmail(Trigger.old);
+    }
+
 }

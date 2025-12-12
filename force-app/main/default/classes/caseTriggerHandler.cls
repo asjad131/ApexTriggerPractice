@@ -245,6 +245,45 @@ public class caseTriggerHandler {
 
              }
 
+        }
+        //create task and send mail
+        public static void createTaskAndEmail(List<Case> oldCases){
+
+            Set<Id> accIds = new Set<Id>();
+
+            for(Case c:oldCases){
+                accIds.add(c.AccountId);
+            }
+
+            Map <Id, Account> accMap = new Map<Id,Account>([SELECT Id, Name, Owner.Email from Account where Id IN: accIds]);
+            List <Task> lstTask = new List<Task>();
+            List<Messaging.SingleEmailMessage> emailsToSend = new List<Messaging.SingleEmailMessage>();
+
+
+            for(Case cas: oldCases){
+
+                Account acc = accMap.get(cas.AccountId);
+
+                Task task = new Task();
+                task.Subject = 'Follow Up task - Case Deletion';
+                task.Description = 'A case has been deleted. Case Number:'+ cas.CaseNumber;
+                task.Status = 'Not Started';
+                task.WhatId =acc.Id;
+                task.Priority = 'Normal';
+                lstTask.add(task);
+
+                if(acc.Owner.Email != null){
+
+                Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
+                email.setToAddresses(new String[]{acc.Owner.Email});
+                email.setSubject('Case Delete notification');
+                email.setPlainTextBody('A case has been deleted. Case Number:'+ cas.CaseNumber +'\n Your Salesforce Team');
+                emailsToSend.add(email);
+            }
+            }
+            
+            insert lstTask;
+            Messaging.sendEmail(emailsToSend);
 
         }
              
